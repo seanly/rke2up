@@ -1,0 +1,25 @@
+write-kubeconfig-mode: "0644"
+
+cluster-cidr: "192.168.60.0/24"
+service-cidr: "192.168.61.0/24"
+
+service-node-port-range: 30000-32767
+
+selinux: false
+tls-san:
+  - "127.0.0.1"
+  - "192.168.0.92"
+
+disable-cloud-controller: true
+
+cni: calico
+
+kube-proxy-arg:
+  - "proxy-mode=ipvs"
+
+kubelet-arg:
+  - "max-pods=110"
+
+disable:
+  - rke2-ingress-nginx
+
