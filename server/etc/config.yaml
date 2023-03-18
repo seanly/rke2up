@@ -9,6 +9,7 @@ selinux: false
 tls-san:
   - "127.0.0.1"
   - "192.168.0.92"
+  - "192.168.0.93"
 
 disable-cloud-controller: true
 

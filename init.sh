@@ -13,4 +13,4 @@ mkdir -p /var/lib/rancher/rke2/agent/images
 rsync -av ./etc/config.yaml /etc/rancher/rke2/
 rsync -av ${INSTALL_RKE2_AGENT_IMAGES_DIR}/ /var/lib/rancher/rke2/agent/images
 
-./install.sh
+./scripts/install.sh
