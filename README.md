@@ -9,7 +9,7 @@ curl -sfL https://get.rke2.io --output install.sh
 
 # TODO
 
-- rke2up (inspired by k3sup)
+- rke2up (inspired by [k3sup](https://github.com/alexellis/k3sup))
 
     - stage2: select rke2 version and target host
     - stage1: get airgap package and push package to target host
