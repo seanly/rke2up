@@ -1,0 +1,2 @@
+FROM seanly/opsbox:toolset
+
