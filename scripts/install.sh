@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -x
-
 set -e
 
 if [ "${DEBUG}" = 1 ]; then
@@ -18,7 +16,7 @@ fi
 #
 #   - INSTALL_RKE2_CHANNEL
 #     Channel to use for fetching rke2 download URL.
-#     Defaults to 'latest'.
+#     Defaults to 'stable'.
 #
 #   - INSTALL_RKE2_METHOD
 #     The installation method to use.
@@ -60,6 +58,10 @@ fi
 #   - INSTALL_RKE2_SKIP_RELOAD
 #     If set, the install script will skip reloading systemctl daemon after the tar has been extracted and systemd units
 #     have been moved.
+#     Default is not set.
+#
+#   - INSTALL_RKE2_SKIP_FAPOLICY
+#     If set, the install script will skip adding fapolicy rules
 #     Default is not set.
 
 
@@ -159,12 +161,12 @@ check_method_conflict() {
 # fatal if architecture not supported.
 setup_arch() {
     case ${ARCH:=$(uname -m)} in
-    amd64)
+    x86_64|amd64)
         ARCH=amd64
         SUFFIX=$(uname -s | tr '[:upper:]' '[:lower:]')-${ARCH}
         ;;
-    x86_64)
-        ARCH=amd64
+    aarch64|arm64)
+        ARCH=arm64
         SUFFIX=$(uname -s | tr '[:upper:]' '[:lower:]')-${ARCH}
         ;;
     s390x)
@@ -194,12 +196,17 @@ verify_downloader() {
 }
 
 # verify_fapolicyd verifies existence of
-# fapolicyd executable.
+# fapolicyd and fagenrules executables and make sure that fapolicyd service is running.
 verify_fapolicyd() {
     cmd="$(command -v "fapolicyd")"
     if [ -z "${cmd}" ]; then
         return 1
     fi
+    cmd="$(command -v "fagenrules")"
+    if [ -z "${cmd}" ]; then
+        return 1
+    fi
+    systemctl is-active --quiet fapolicyd || return 1
 
     return 0
 }
@@ -428,7 +435,7 @@ install_airgap_tarball() {
     mkdir -p "${INSTALL_RKE2_AGENT_IMAGES_DIR}"
     # releases that provide zst artifacts can read from the compressed archive; older releases
     # that produce only gzip artifacts need to have the tarball decompressed ahead of time
-    if grep -qF '.tar.zst' "${TMP_AIRGAP_CHECKSUMS}" || [ "${AIRGAP_TARBALL_FORMAT}" = "zst" ]; then
+    if grep -sqF '.tar.zst' "${TMP_AIRGAP_CHECKSUMS}" || [ "${AIRGAP_TARBALL_FORMAT}" = "zst" ]; then
         info "installing airgap tarball to ${INSTALL_RKE2_AGENT_IMAGES_DIR}"
         mv -f "${TMP_AIRGAP_TARBALL}" "${INSTALL_RKE2_AGENT_IMAGES_DIR}/rke2-images.${SUFFIX}.tar.zst"
     else
@@ -477,7 +484,17 @@ do_install_rpm() {
             repodir=/etc/zypp/repos.d
         fi
         if [ "${ID_LIKE%%[ ]*}" = "suse" ]; then
+            # create the /var/lib/rpm-state in SLE systems to fix the prein selinux macro
+            if [ "${TRANSACTIONAL_UPDATE=false}" != "true" ] && [ -x /usr/sbin/transactional-update ]; then
+                transactional_update_run="transactional-update --no-selfupdate -d run"
+            fi
+            ${transactional_update_run} mkdir -p /var/lib/rpm-state
+            # configure infix and rpm_installer
             rpm_site_infix=microos
+            if [ "${VARIANT_ID:-}" = sle-micro ] || [ "${ID:-}" = sle-micro ]; then
+                rpm_site_infix=slemicro
+                package_installer=zypper
+            fi
             rpm_installer="zypper --gpg-auto-import-keys"
             if [ "${TRANSACTIONAL_UPDATE=false}" != "true" ] && [ -x /usr/sbin/transactional-update ]; then
                 rpm_installer="transactional-update --no-selfupdate -d run ${rpm_installer}"
@@ -485,11 +502,8 @@ do_install_rpm() {
         else
             maj_ver=$(echo "$VERSION_ID" | sed -E -e "s/^([0-9]+)\.?[0-9]*$/\1/")
             case ${maj_ver} in
-                7|8)
+                7|8|9)
                     :
-                    ;;
-                9) # We are currently using EL8 packages for EL9 as well
-                    maj_ver="8"
                     ;;
                 *) # In certain cases, like installing on Fedora, maj_ver will end up being something that is not 7 or 8
                     maj_ver="7"
@@ -546,6 +560,16 @@ gpgkey=https://${rpm_site}/public.key
 EOF
     fi
 
+    if rpm -q --quiet rke2-selinux; then 
+            # remove rke2-selinux module in el9 before upgrade to allow container-selinux to upgrade safely
+            if check_available_upgrades container-selinux && check_available_upgrades rke2-selinux; then
+                MODULE_PRIORITY=$(semodule --list=full | grep rke2 | cut -f1 -d" ")
+                if [ -n "${MODULE_PRIORITY}" ]; then
+                    semodule -X $MODULE_PRIORITY -r rke2 || true
+                fi
+            fi
+        fi
+
     if [ -z "${INSTALL_RKE2_VERSION}" ] && [ -z "${INSTALL_RKE2_COMMIT}" ]; then
         ${rpm_installer} install -y "rke2-${INSTALL_RKE2_TYPE}"
     elif [ -n "${INSTALL_RKE2_COMMIT}" ]; then
@@ -559,6 +583,21 @@ EOF
             ${rpm_installer} install -y "rke2-${INSTALL_RKE2_TYPE}-${rke2_rpm_version}"
         fi
     fi
+}
+
+check_available_upgrades() {
+    . /etc/os-release
+    set +e
+    if [ "${ID_LIKE%%[ ]*}" = "suse" ]; then
+        available_upgrades=$(zypper -q -t -s 11 se -s -u --type package $1 | tail -n 1 | grep -v "No matching" | awk '{print $3}')
+    else
+        available_upgrades=$(yum -q --refresh list $1 --upgrades | tail -n 1 | awk '{print $2}')
+    fi
+    set -e
+    if [ -n "${available_upgrades}" ]; then
+        return 0
+    fi
+    return 1
 }
 
 do_install_tar() {
@@ -620,7 +659,9 @@ do_install() {
         do_install_tar "${INSTALL_RKE2_CHANNEL}"
         ;;
     esac
-    setup_fapolicy_rules
+    if [ -z "${INSTALL_RKE2_SKIP_FAPOLICY}" ]; then
+        setup_fapolicy_rules
+    fi
 }
 
 do_install
