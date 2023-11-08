@@ -15,3 +15,12 @@ curl -sfL https://get.rke2.io --output install.sh
     - stage1: get airgap package and push package to target host
     - stage3: download install script and push script to target host
     - stage4: run install script on target host
+
+## rke2 version
+
+v1.28.3+rke2r1
+v1.27.7+rke2r1
+v1.26.10+rke2r1
+v1.25.15+rke2r1
+v1.24.17+rke2r1
+v1.23.17+rke2r1

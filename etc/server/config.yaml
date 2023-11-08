@@ -1,5 +1,5 @@
-server: https://192.168.2.91:9345
 token: K10d1c71f25f588250c29c77351dfa35b01be1bd16104a0c2a54f4dc98e39dbbd02::server:67635ae6916050b05420f42715e65a4a
+
 write-kubeconfig-mode: "0644"
 
 cluster-cidr: "192.168.60.0/24"
@@ -7,14 +7,14 @@ service-cidr: "192.168.61.0/24"
 
 service-node-port-range: 30000-32767
 
-selinux: false
 tls-san:
   - "127.0.0.1"
-  - "192.168.0.91"
-  - "192.168.0.92"
-  - "192.168.0.93"
-
-disable-cloud-controller: true
+  - "192.168.2.189"
+  - "192.168.2.183"
+  - "192.168.2.172"
+  - "rke2-node1.lan"
+  - "rke2-node2.lan"
+  - "rke2-node3.lan"
 
 cni: calico
 
@@ -27,3 +27,9 @@ kubelet-arg:
 disable:
   - rke2-ingress-nginx
 
+# node-label:
+#   - "foo=bar"
+
+disable-cloud-controller: true
+selinux: false
+debug: false
