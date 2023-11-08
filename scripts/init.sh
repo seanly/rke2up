@@ -2,10 +2,10 @@
 
 set -eux
 
-export INSTALL_RKE2_VERSION=${1:v1.26.10+rke2r1}
+export INSTALL_RKE2_TYPE=${1:-server}
 shift
 
-export INSTALL_RKE2_TYPE=$1
+export INSTALL_RKE2_VERSION=${1:-v1.26.10+rke2r1}
 shift
 
 export INSTALL_RKE2_METHOD=tar
