@@ -1,5 +1,10 @@
 version: "3"
 services:
+  rke2up-latest:
+    build:
+      context: ./
+      target: latest
+    image: seanly/rke2up
   rke2-1-26:
     build:
       context: ./
