@@ -6,10 +6,7 @@ SCRIPT_FILE=$(readlink -f $0)
 CURRENT_DIR=$(dirname $SCRIPT_FILE)
 
 export INSTALL_RKE2_TYPE=${1:-server}
-shift
-
-export INSTALL_RKE2_VERSION=${1:-v1.26.10+rke2r1}
-shift
+export INSTALL_RKE2_VERSION=${2:-v1.26.10+rke2r1}
 
 export INSTALL_RKE2_METHOD=tar
 export INSTALL_RKE2_ARTIFACT_PATH=${CURRENT_DIR}/${INSTALL_RKE2_VERSION}/artifacts
