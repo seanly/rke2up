@@ -11,7 +11,7 @@ shift
 ## - sha256sum-amd64.txt
 ## - rke2.linux-amd64.tar.gz
 ## - rke2-images-core.linux-amd64.tar.gz
-## - rke2-images-cilium.linux-amd64.txt
+## - rke2-images-cilium.linux-amd64.tar.gz
 ## - rke2-images-calico.linux-amd64.tar.gz
 
 _release_baseurl=https://github.com/rancher/rke2/releases/download
@@ -50,7 +50,15 @@ do_download_rke2_calico_images() {
     curl -sfL $_target_url > ${_release_dir}/images/${_rke2_calico_images}
 }
 
+do_download_rke2_cilium_images() {
+    _rke2_cilium_images=rke2-images-cilium.linux-amd64.tar.gz
+
+    _target_url=${_release_baseurl}/${_url_encode_release}/${_rke2_cilium_images}
+    curl -sfL $_target_url > ${_release_dir}/images/${_rke2_cilium_images}
+}
+
 do_download_verify_file
 do_download_rke2
 do_download_rke2_core_images
 do_download_rke2_calico_images
+do_download_rke2_cilium_images
