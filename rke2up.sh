@@ -27,5 +27,9 @@ rsync -av ${INSTALL_RKE2_AGENT_IMAGES_DIR}/ ${_rke2_images_path}
 ## stage4: install cluster
 bash ${CURRENT_DIR}/lib/install.sh
 
+modprobe ip_vs
+lsmod | grep ip_vs
+ls /lib/modules/$(uname -r)/kernel/net/netfilter/ipvs|grep -o "^[^.]*" >> /etc/modules
+setenforce 0
 systemctl start rke2-${INSTALL_RKE2_TYPE}
 journalctl -f -u rke2-${INSTALL_RKE2_TYPE}
