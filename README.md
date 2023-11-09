@@ -1,4 +1,4 @@
-# rke2-demo
+# rke2up
 
 ## Install Scripts
 
@@ -49,16 +49,16 @@ unmanaged-devices=interface-name:cali*;interface-name:flannel*
 
 ## install 
 ```
-stage1: download rke2-demo image and export
+stage1: download rke2up image and export
 
 ```
-docker save seanly/rke2-demo:v1.26.10-rke2r1 | gzip > rke2-demo.tar.gz
+docker save seanly/rke2up:v1.26.10-rke2r1 | gzip > rke2up.tar.gz
 ```
 
 stage2: send package to target host and decompression
 
 ```
-gunzip -c rke2-demo.tar.gz| tar --extract --wildcards --to-stdout '*/layer.tar' | tar --extract --ignore-zeros
+gunzip -c rke2up.tar.gz| tar --extract --wildcards --to-stdout '*/layer.tar' | tar --extract --ignore-zeros
 ```
 
 stage3: run install-rke2.sh server/agent

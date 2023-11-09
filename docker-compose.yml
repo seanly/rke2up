@@ -5,10 +5,10 @@ services:
       context: ./
       args:
         RKE2_VERSION: v1.26.10+rke2r1
-    image: seanly/rke2-demo:v1.26.10-rke2r1
+    image: seanly/rke2up:v1.26.10-rke2r1
   rke2-1-27:
     build:
       context: ./
       args:
         RKE2_VERSION: v1.27.7+rke2r1
-    image: seanly/rke2-demo:v1.27.7-rke2r1
+    image: seanly/rke2up:v1.27.7-rke2r1
