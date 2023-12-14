@@ -1,6 +1,6 @@
 
 ## agent >>
-# server: https://rke2-vip:9345
+server: https://rke2-node1.lan:9345
 
 # token: xxx # from  `cat /var/lib/rancher/rke2/server/token`
 
