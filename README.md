@@ -32,7 +32,7 @@ curl -sfL https://get.rke2.io --output install.sh
 - load ip_vs
 ```
 lsmod | grep ip_vs
-ls /lib/modules/$(uname -r)/kernel/net/netfilter/ipvs|grep -o "^[^.]*" >> /etc/modules
+ls /lib/modules/$(uname -r)/kernel/net/netfilter/ipvs|grep -o "^[^.]*" > /etc/modules-load.d/ip_vs.conf
 
 ```
 
