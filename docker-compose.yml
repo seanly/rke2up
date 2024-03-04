@@ -17,3 +17,10 @@ services:
       args:
         RKE2_VERSION: v1.27.7+rke2r1
     image: seanly/rke2up:v1.27.7-rke2r1
+
+  rke2-1-28:
+    build:
+      context: ./
+      args:
+        RKE2_VERSION: v1.28.7+rke2r1
+    image: seanly/rke2up:v1.28.7-rke2r1
